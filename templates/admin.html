@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - {{ super() }}{% endblock %}
+
+{% block navigation %}
+<div class="nav-tabs">
+    <a href="{{ url_for('index') }}" class="nav-tab">Customer Portal</a>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-tab active">Admin Dashboard</a>
+    <a href="{{ url_for('admin_reservations') }}" class="nav-tab">All Reservations</a>
+    <a href="{{ url_for('admin_tables') }}" class="nav-tab">Table Management</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<h2>Admin Dashboard</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_reservations }}</div>
+        <div>Total Reservations Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.available_tables }}</div>
+        <div>Available Tables</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.occupancy_rate }}%</div>
+        <div>Occupancy Rate</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.pending_count }}</div>
+        <div>Pending Confirmations</div>
+    </div>
+</div>
+
+<h3>Today's Reservations</h3>
+<div class="search-section">
+    <input type="text" id="searchReservations" placeholder="Search reservations by name, phone, or table..." style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;">
+</div>
+<div id="todayReservations">
+    {% if reservations %}
+        {% for reservation in reservations %}
+            <div class="reservation-item" data-reservation-id="{{ reservation.reservation_id }}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>{{ reservation.customer.full_name }}</strong> - Table {{ reservation.table.table_number }}<br>
+                        <small>Date: {{ reservation.reservation_date|date }} | Time: {{ reservation.reservation_time|time }} | Party: {{ reservation.party_size }} people</small><br>
+                        <small>Phone: {{ reservation.customer.phone }}</small>
+                        {% if reservation.customer.email %}
+                            <br><small>Email: {{ reservation.customer.email }}</small>
+                        {% endif %}
+                        {% if reservation.special_requests %}
+                            <br><small><strong>Special Requests:</strong> {{ reservation.special_requests }}</small>
+                        {% endif %}
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="status-badge status-{{ reservation.status }}">{{ reservation.status.title() }}</span><br><br>
+                        {% if reservation.status == 'pending' %}
+                            <button class="btn btn-success" onclick="confirmReservation({{ reservation.reservation_id }})">Confirm</button>
+                        {% elif reservation.status == 'confirmed' %}
+                            <button class="btn btn-success" onclick="completeReservation({{ reservation.reservation_id }})">Complete</button>
+                        {% endif %}
+                        {% if reservation.can_be_cancelled() %}
+                            <button class="btn btn-danger" onclick="cancelReservation({{ reservation.reservation_id }})">Cancel</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            No reservations for today.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Search functionality
+    $('#searchReservations').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        $('.reservation-item').each(function() {
+            const text = $(this).text().toLowerCase();
+            if (text.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Auto-refresh reservations every 60 seconds
+    setInterval(function() {
+        location.reload();
+    }, 60000);
+});
+
+function confirmReservation(reservationId) {
+    if (!confirm('Are you sure you want to confirm this reservation?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: `/api/reservations/${reservationId}/confirm`,
+        method: 'POST',
+        success: function(response) {
+            location.reload(); // Reload to show updated status
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            alert(response.error || 'Error confirming reservation');
+        }
+    });
+}
+
+function cancelReservation(reservationId) {
+    if (!confirm('Are you sure you want to cancel this reservation?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: `/api/reservations/${reservationId}/cancel`,
+        method: 'POST',
+        success: function(response) {
+            location.reload(); // Reload to show updated status
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            alert(response.error || 'Error cancelling reservation');
+        }
+    });
+}
+
+function completeReservation(reservationId) {
+    if (!confirm('Mark this reservation as completed?')) {
+        return;
+    }
+    
+    // This would need a separate API endpoint
+    alert('Complete reservation functionality would be implemented here');
+}
+
+// Auto-refresh every 30 seconds to show real-time updates
+setInterval(function() {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

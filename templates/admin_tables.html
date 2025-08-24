@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Table Management - {{ super() }}{% endblock %}
+
+{% block navigation %}
+<div class="nav-tabs">
+    <a href="{{ url_for('index') }}" class="nav-tab">Customer Portal</a>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-tab">Admin Dashboard</a>
+    <a href="{{ url_for('admin_reservations') }}" class="nav-tab">All Reservations</a>
+    <a href="{{ url_for('admin_tables') }}" class="nav-tab active">Table Management</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<h2>Table Management</h2>
+
+<div class="two-column">
+    <div>
+        <h3>Add New Table</h3>
+        <form id="tableForm">
+            <div class="form-group">
+                <label for="tableNumber">Table Number *</label>
+                <input type="number" id="tableNumber" name="table_number" min="1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="tableCapacity">Capacity *</label>
+                <select id="tableCapacity" name="capacity" required>
+                    <option value="">Select Capacity</option>
+                    <option value="2">2 People</option>
+                    <option value="4">4 People</option>
+                    <option value="6">6 People</option>
+                    <option value="8">8 People</option>
+                    <option value="10">10 People</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="tableLocation">Location</label>
+                <input type="text" id="tableLocation" name="location" placeholder="e.g., Window Side, Garden View">
+            </div>
+            
+            <div class="form-group">
+                <label for="tableStatus">Status</label>
+                <select id="tableStatus" name="status">
+                    <option value="available">Available</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Add Table</button>
+        </form>
+    </div>
+    
+    <div>
+        <h3>Current Tables ({{ tables|length }} total)</h3>
+        <div id="tablesList" class="table-grid">
+            {% for table in tables %}
+                <div class="table-card {{ table.status }}" data-table-id="{{ table.table_id }}">
+                    <h4>Table {{ table.table_number }}</h4>
+                    <p>Capacity: {{ table.capacity }} people</p>
+                    {% if table.location %}
+                        <p>Location: {{ table.location }}</p>
+                    {% endif %}
+                    <p>Status: {{ table.status.title() }}</p>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-success" onclick="editTable({{ table.table_id }})">Edit</button>
+                        {% if current_user.is_admin() %}
+                            <button class="btn btn-danger" onclick="removeTable({{ table.table_id }})">Remove</button>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Edit Table Modal (Simple version) -->
+<div id="editTableModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; min-width: 400px;">
+        <h3>Edit Table</h3>
+        <form id="editTableForm">
+            <input type="hidden" id="editTableId">
+            
+            <div class="form-group">
+                <label for="editTableNumber">Table Number</label>
+                <input type="number" id="editTableNumber" min="1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="editTableCapacity">Capacity</label>
+                <select id="editTableCapacity" required>
+                    <option value="2">2 People</option>
+                    <option value="4">4 People</option>
+                    <option value="6">6 People</option>
+                    <option value="8">8 People</option>
+                    <option value="10">10 People</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="editTableLocation">Location</label>
+                <input type="text" id="editTableLocation">
+            </div>
+            
+            <div class="form-group">
+                <label for="editTableStatus">Status</label>
+                <select id="editTableStatus">
+                    <option value="available">Available</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary">Update Table</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Handle add table form submission
+    $('#tableForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            table_number: parseInt($('#tableNumber').val()),
+            capacity: parseInt($('#tableCapacity').val()),
+            location: $('#tableLocation').val(),
+            status: $('#tableStatus').val()
+        };
+        
+        $.ajax({
+            url: '/api/tables',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                alert('Table added successfully!');
+                location.reload();
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                alert(response.error || 'Error adding table');
+            }
+        });
+    });
+    
+    // Handle edit table form submission
+    $('#editTableForm').on('submit', function(e) {
+        e.preventDefault();
+        alert('Update table functionality would be implemented here');
+        closeEditModal();
+    });
+});
+
+function editTable(tableId) {
+    // In a real implementation, you would fetch table data and populate the form
+    // For now, we'll just show the modal
+    $('#editTableId').val(tableId);
+    $('#editTableModal').show();
+}
+
+function closeEditModal() {
+    $('#editTableModal').hide();
+}
+
+function removeTable(tableId) {
+    if (!confirm('Are you sure you want to remove this table? This action cannot be undone.')) {
+        return;
+    }
+    
+    // This would need a delete API endpoint
+    alert('Remove table functionality would be implemented here');
+}
+
+// Close modal when clicking outside
+$(document).on('click', '#editTableModal', function(e) {
+    if (e.target === this) {
+        closeEditModal();
+    }
+});
+</script>
+{% endblock %}

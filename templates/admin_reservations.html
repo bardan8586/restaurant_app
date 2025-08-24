@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}All Reservations - {{ super() }}{% endblock %}
+
+{% block navigation %}
+<div class="nav-tabs">
+    <a href="{{ url_for('index') }}" class="nav-tab">Customer Portal</a>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-tab">Admin Dashboard</a>
+    <a href="{{ url_for('admin_reservations') }}" class="nav-tab active">All Reservations</a>
+    <a href="{{ url_for('admin_tables') }}" class="nav-tab">Table Management</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<h2>All Reservations</h2>
+
+<div class="search-section">
+    <input type="text" id="searchAllReservations" placeholder="Search all reservations by name, phone, or table..." style="width: 70%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; display: inline-block;">
+    <input type="date" id="filterDate" style="width: 25%; padding: 10px; margin-bottom: 15px; margin-left: 2%; border: 1px solid #ddd; border-radius: 5px; display: inline-block;">
+</div>
+
+<div class="stats-section" style="margin-bottom: 20px;">
+    <span class="stat-badge">Total: {{ reservations.total }}</span>
+    <span class="stat-badge">Current Page: {{ reservations.page }}/{{ reservations.pages }}</span>
+</div>
+
+<div id="allReservations">
+    {% if reservations.items %}
+        {% for reservation in reservations.items %}
+            <div class="reservation-item" data-reservation-id="{{ reservation.reservation_id }}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>{{ reservation.customer.full_name }}</strong> - Table {{ reservation.table.table_number }}<br>
+                        <small>Date: {{ reservation.reservation_date|date }} | Time: {{ reservation.reservation_time|time }} | Party: {{ reservation.party_size }} people</small><br>
+                        <small>Phone: {{ reservation.customer.phone }}</small>
+                        {% if reservation.customer.email %}
+                            <br><small>Email: {{ reservation.customer.email }}</small>
+                        {% endif %}
+                        {% if reservation.special_requests %}
+                            <br><small><strong>Special Requests:</strong> {{ reservation.special_requests }}</small>
+                        {% endif %}
+                        <br><small><strong>Created:</strong> {{ reservation.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="status-badge status-{{ reservation.status }}">{{ reservation.status.title() }}</span><br><br>
+                        {% if reservation.can_be_modified() %}
+                            <button class="btn btn-success btn-small" onclick="confirmReservation({{ reservation.reservation_id }})">Confirm</button>
+                            <button class="btn btn-danger btn-small" onclick="cancelReservation({{ reservation.reservation_id }})">Cancel</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        <div class="pagination" style="margin-top: 20px; text-align: center;">
+            {% if reservations.has_prev %}
+                <a href="{{ url_for('admin_reservations', page=reservations.prev_num) }}" class="btn btn-secondary">Previous</a>
+            {% endif %}
+            
+            {% for page_num in reservations.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != reservations.page %}
+                        <a href="{{ url_for('admin_reservations', page=page_num) }}" class="btn btn-secondary">{{ page_num }}</a>
+                    {% else %}
+                        <span class="btn btn-primary">{{ page_num }}</span>
+                    {% endif %}
+                {% else %}
+                    <span>...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if reservations.has_next %}
+                <a href="{{ url_for('admin_reservations', page=reservations.next_num) }}" class="btn btn-secondary">Next</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="no-data">
+            <p>No reservations found.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Search functionality
+    $('#searchAllReservations').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        $('.reservation-item').each(function() {
+            const text = $(this).text().toLowerCase();
+            if (text.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+    
+    // Date filter functionality
+    $('#filterDate').on('change', function() {
+        const selectedDate = $(this).val();
+        if (selectedDate) {
+            window.location.href = '{{ url_for("admin_reservations") }}?date=' + selectedDate;
+        } else {
+            window.location.href = '{{ url_for("admin_reservations") }}';
+        }
+    });
+});
+
+function confirmReservation(reservationId) {
+    if (!confirm('Are you sure you want to confirm this reservation?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: `/api/reservations/${reservationId}/confirm`,
+        method: 'POST',
+        success: function(response) {
+            location.reload();
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            alert('Error: ' + (response.error || 'Failed to confirm reservation'));
+        }
+    });
+}
+
+function cancelReservation(reservationId) {
+    if (!confirm('Are you sure you want to cancel this reservation?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: `/api/reservations/${reservationId}/cancel`,
+        method: 'POST',
+        success: function(response) {
+            location.reload();
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            alert('Error: ' + (response.error || 'Failed to cancel reservation'));
+        }
+    });
+}
+</script>
+{% endblock %}

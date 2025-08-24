@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Portal - {{ super() }}{% endblock %}
+
+{% block navigation %}
+<div class="nav-tabs">
+    <a href="#" class="nav-tab active" onclick="showTab('customer')">Customer Portal</a>
+    {% if current_user.is_authenticated and current_user.is_staff() %}
+        <a href="{{ url_for('admin_dashboard') }}" class="nav-tab">Admin Dashboard</a>
+        <a href="{{ url_for('admin_tables') }}" class="nav-tab">Table Management</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<h2>Make a Reservation</h2>
+<div class="two-column">
+    <div>
+        <form id="reservationForm">
+            <div class="form-group">
+                <label for="customerFirstName">First Name *</label>
+                <input type="text" id="customerFirstName" name="first_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="customerLastName">Last Name *</label>
+                <input type="text" id="customerLastName" name="last_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="customerPhone">Phone *</label>
+                <input type="tel" id="customerPhone" name="phone" required placeholder="Enter your phone number">
+                <small class="help-text">Any format is acceptable</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="customerEmail">Email</label>
+                <input type="email" id="customerEmail" name="email">
+            </div>
+            
+            <div class="form-group">
+                <label for="reservationDate">Date *</label>
+                <input type="date" id="reservationDate" name="date" required>
+                <small class="help-text">Select a date up to 30 days in advance</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="reservationTime">Time *</label>
+                <select id="reservationTime" name="time" required>
+                    <option value="">Select Time</option>
+                    <option value="17:00">5:00 PM</option>
+                    <option value="17:30">5:30 PM</option>
+                    <option value="18:00">6:00 PM</option>
+                    <option value="18:30">6:30 PM</option>
+                    <option value="19:00">7:00 PM</option>
+                    <option value="19:30">7:30 PM</option>
+                    <option value="20:00">8:00 PM</option>
+                    <option value="20:30">8:30 PM</option>
+                    <option value="21:00">9:00 PM</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="partySize">Party Size *</label>
+                <select id="partySize" name="party_size" required>
+                    <option value="">Select Size</option>
+                    <option value="1">1 Person</option>
+                    <option value="2">2 People</option>
+                    <option value="3">3 People</option>
+                    <option value="4">4 People</option>
+                    <option value="5">5 People</option>
+                    <option value="6">6 People</option>
+                    <option value="7">7 People</option>
+                    <option value="8">8 People</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="specialRequests">Special Requests</label>
+                <textarea id="specialRequests" name="special_requests" rows="3" placeholder="Any special requests or notes..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="submitBtn">Check Availability & Book</button>
+        </form>
+    </div>
+    
+            <div>
+            <h3>Available Tables</h3>
+            <p><small>The first available table will be automatically selected for your reservation</small></p>
+            <div id="availableTables" class="table-grid">
+                <div class="loading">Select date, time, and party size to see available tables</div>
+            </div>
+        </div>
+</div>
+
+<div id="message"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    $('#reservationDate').attr('min', today);
+    
+    // Set maximum date to 30 days from now
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 30);
+    $('#reservationDate').attr('max', maxDate.toISOString().split('T')[0]);
+    
+    // Real-time system status
+    checkSystemStatus();
+    setInterval(checkSystemStatus, 30000); // Check every 30 seconds
+    
+    // Update available tables when date, time, or party size changes
+    $('#reservationDate, #reservationTime, #partySize').on('change', function() {
+        updateAvailableTables();
+    });
+    
+    // Handle form submission
+    $('#reservationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form first
+        if (!validateForm()) {
+            return;
+        }
+        
+        const formData = {
+            first_name: $('#customerFirstName').val(),
+            last_name: $('#customerLastName').val(),
+            phone: $('#customerPhone').val(),
+            email: $('#customerEmail').val(),
+            date: $('#reservationDate').val(),
+            time: $('#reservationTime').val(),
+            party_size: parseInt($('#partySize').val()),
+            special_requests: $('#specialRequests').val()
+        };
+        
+        // Validate required fields
+        if (!formData.first_name || !formData.last_name || !formData.phone || 
+            !formData.date || !formData.time || !formData.party_size) {
+            showMessage('Please fill in all required fields.', 'error');
+            return;
+        }
+        
+        // Disable submit button
+        $('#submitBtn').prop('disabled', true).text('Creating Reservation...');
+        
+        // Create reservation
+        $.ajax({
+            url: '/api/reservations',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                showMessage(
+                    `Reservation successful! Table ${response.reservation.table.table_number} has been reserved for ${formData.first_name} ${formData.last_name} on ${formData.date} at ${formatTime(formData.time)}. Confirmation pending.`,
+                    'success'
+                );
+                
+                // Reset form
+                $('#reservationForm')[0].reset();
+                updateAvailableTables();
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                showMessage(response.error || 'An error occurred while creating the reservation.', 'error');
+            },
+            complete: function() {
+                $('#submitBtn').prop('disabled', false).text('Check Availability & Book');
+            }
+        });
+    });
+});
+
+function updateAvailableTables() {
+    const date = $('#reservationDate').val();
+    const time = $('#reservationTime').val();
+    const partySize = $('#partySize').val();
+    
+    if (!date || !time || !partySize) {
+        $('#availableTables').html('<div class="loading">Select date, time, and party size to see available tables</div>');
+        return;
+    }
+    
+    $('#availableTables').html('<div class="loading">Loading available tables...</div>');
+    
+    $.ajax({
+        url: '/api/tables/available',
+        method: 'GET',
+        data: {
+            date: date,
+            time: time,
+            party_size: partySize
+        },
+        success: function(response) {
+            displayAvailableTables(response.available_tables);
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            $('#availableTables').html(`<div class="error-message">${response.error || 'Error loading tables'}</div>`);
+        }
+    });
+}
+
+function displayAvailableTables(tables) {
+    const container = $('#availableTables');
+    
+    if (tables.length === 0) {
+        container.html('<div class="error-message">No tables available for the selected date, time, and party size. Please try a different time.</div>');
+        return;
+    }
+    
+    let html = '';
+    tables.forEach(function(table, index) {
+        const isFirst = index === 0;
+        html += `
+            <div class="table-card available ${isFirst ? 'selected' : ''}" data-table-id="${table.table_id}">
+                <h4>Table ${table.table_number} ${isFirst ? '👑 SELECTED' : ''}</h4>
+                <p>Capacity: ${table.capacity} people</p>
+                <p>Location: ${table.location || 'Not specified'}</p>
+                <p>Status: ${isFirst ? 'Will be reserved for you' : 'Available'}</p>
+            </div>
+        `;
+    });
+    
+    container.html(html);
+}
+
+function showMessage(message, type) {
+    const messageDiv = $('#message');
+    const alertClass = type === 'success' ? 'success-message' : 'error-message';
+    messageDiv.html(`<div class="${alertClass}">${message}</div>`);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(function() {
+        messageDiv.html('');
+    }, 5000);
+    
+    // Scroll to message
+    messageDiv[0].scrollIntoView({ behavior: 'smooth' });
+}
+
+function formatTime(timeStr) {
+    const [hours, minutes] = timeStr.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    return `${displayHour}:${minutes} ${ampm}`;
+}
+
+function showTab(tabName) {
+    // This function is kept for compatibility but not used in this template
+    // since we're using separate routes for different sections
+}
+
+function checkSystemStatus() {
+    $.ajax({
+        url: '/api/tables/available',
+        method: 'GET',
+        data: {
+            date: new Date().toISOString().split('T')[0],
+            time: '19:00',
+            party_size: 2
+        },
+        timeout: 5000,
+        success: function() {
+            $('#systemStatus').text('🟢 Online').removeClass('offline');
+        },
+        error: function() {
+            $('#systemStatus').text('🔴 Offline').addClass('offline');
+        }
+    });
+}
+
+// Table selection simplified - first available table is auto-selected
+
+function validateForm() {
+    const phone = $('#customerPhone').val().trim();
+    
+    if (phone.length < 3) {
+        showMessage('Please enter a phone number', 'error');
+        return false;
+    }
+    
+    const date = new Date($('#reservationDate').val());
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + 30);
+    
+    if (date < today || date > maxDate) {
+        showMessage('Please select a date within the next 30 days', 'error');
+        return false;
+    }
+    
+    return true;
+}
+</script>
+{% endblock %}
