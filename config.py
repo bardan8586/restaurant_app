@@ -10,11 +10,18 @@ class Config:
     # Flask Configuration
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
-    # Database Configuration - supports both MySQL and PostgreSQL
+    # Database Configuration - supports MySQL (local and production)
     DATABASE_URL = os.environ.get('DATABASE_URL')
+    MYSQL_URL = os.environ.get('MYSQL_URL')
     
-    if DATABASE_URL:
-        # Production database (Railway/Heroku provides DATABASE_URL)
+    if DATABASE_URL and 'mysql' in DATABASE_URL:
+        # Railway MySQL database
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    elif MYSQL_URL:
+        # Alternative MySQL URL from Railway
+        SQLALCHEMY_DATABASE_URI = MYSQL_URL
+    elif DATABASE_URL:
+        # Fallback to PostgreSQL if provided
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
