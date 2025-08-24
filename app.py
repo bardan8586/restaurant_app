@@ -445,14 +445,19 @@ if __name__ == '__main__':
     print("🍽️ Restaurant Reservation System Starting...")
     print(f"Database: {app.config['SQLALCHEMY_DATABASE_URI']}")
     
-    # Use PORT environment variable for production (Railway, Heroku)
+    # Use PORT environment variable for production (Railway, Heroku, Render)
     port = int(os.environ.get('PORT', 5001))
-    is_production = os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('HEROKU_APP_NAME')
+    is_production = (os.environ.get('RAILWAY_ENVIRONMENT') or 
+                    os.environ.get('HEROKU_APP_NAME') or 
+                    os.environ.get('RENDER_EXTERNAL_URL'))
     
     if is_production:
-        print(f"Running in production mode on port {port}")
+        print(f"🚀 Running in production mode on port {port}")
+        print(f"🌐 Access URL: {os.environ.get('RENDER_EXTERNAL_URL', 'Production environment')}")
+        print("👨‍💼 Admin login: username=admin, password=admin123")
         app.run(debug=False, host='0.0.0.0', port=port)
     else:
+        print("🏠 Development mode")
         print("Access the application at: http://localhost:5001")
         print("Admin login: username=admin, password=admin123")
         app.run(debug=True, host='0.0.0.0', port=port)
