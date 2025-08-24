@@ -10,7 +10,7 @@ class Config:
     # Flask Configuration
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
-    # Database Configuration - supports MySQL (local and production)
+    # Database Configuration - supports multiple databases
     DATABASE_URL = os.environ.get('DATABASE_URL')
     MYSQL_URL = os.environ.get('MYSQL_URL')
     
@@ -21,23 +21,30 @@ class Config:
         # Alternative MySQL URL from Railway
         SQLALCHEMY_DATABASE_URI = MYSQL_URL
     elif DATABASE_URL:
-        # Fallback to PostgreSQL if provided
+        # PostgreSQL or other databases
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    elif os.environ.get('REPLIT_DB_URL'):
+        # Replit environment - use SQLite for simplicity
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///restaurant.db'
     else:
-        # Development MySQL Configuration
-        MYSQL_HOST = os.environ.get('MYSQL_HOST') or 'localhost'
-        MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
-        MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or ''
-        MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE') or 'restaurant_reservation_db'
-        MYSQL_PORT = int(os.environ.get('MYSQL_PORT', 3306))
-        
-        # SQLAlchemy Configuration
-        SQLALCHEMY_DATABASE_URI = (
-            f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@"
-            f"{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
-        )
+        # Check if MySQL is available locally
+        try:
+            MYSQL_HOST = os.environ.get('MYSQL_HOST') or 'localhost'
+            MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
+            MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or ''
+            MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE') or 'restaurant_reservation_db'
+            MYSQL_PORT = int(os.environ.get('MYSQL_PORT', 3306))
+            
+            # SQLAlchemy Configuration for MySQL
+            SQLALCHEMY_DATABASE_URI = (
+                f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@"
+                f"{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
+            )
+        except:
+            # Fallback to SQLite for easy deployment
+            SQLALCHEMY_DATABASE_URI = 'sqlite:///restaurant.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False  # Set to True for SQL query logging
     
