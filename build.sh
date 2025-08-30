@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Build script for Render.com deployment
+# Build script for Render deployment
 
 set -o errexit  # exit on error
 
-# Install Python dependencies
+echo "🔧 Installing dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "✅ Dependencies installed successfully!"
-echo "🍽️ Restaurant Reservation System ready for deployment!"
+echo "🗄️ Setting up database..."
+python setup_database.py
+
+echo "✅ Build completed successfully!"

@@ -6,7 +6,7 @@ This is the main Flask application for the restaurant reservation system.
 It provides a web interface for customers to make reservations and for
 administrators to manage the system.
 
-Author: [Your Name]
+Author: 
 Date: [Current Date]
 """
 

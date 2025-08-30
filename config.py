@@ -35,7 +35,7 @@ class Config:
             MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
             MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or ''
             MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE') or 'restaurant_reservation_db'
-            MYSQL_PORT = int(os.environ.get('MYSQL_PORT', 3306))
+            MYSQL_PORT = int(os.environ.get('MYSQL_PORT', 3307))
             
             # SQLAlchemy Configuration for MySQL
             SQLALCHEMY_DATABASE_URI = (
