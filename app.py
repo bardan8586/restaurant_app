@@ -27,7 +27,7 @@ def create_app(config_name=None):
     Returns:
         Flask: Configured Flask application
     """
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static', static_url_path='/static')
     
     # Load configuration
     config_name = config_name or os.environ.get('FLASK_ENV', 'default')
@@ -62,10 +62,28 @@ def register_routes(app):
     @app.route('/favicon.ico')
     def favicon():
         """Serve favicon"""
-        from flask import send_from_directory
+        from flask import send_from_directory, current_app
         import os
-        return send_from_directory(os.path.join(app.root_path, 'static'),
-                                 'favicon.svg', mimetype='image/svg+xml')
+        try:
+            return send_from_directory(
+                os.path.join(current_app.root_path, 'static'),
+                'favicon.svg', 
+                mimetype='image/svg+xml'
+            )
+        except Exception as e:
+            # Fallback: return a simple text response
+            return "🍽️", 200, {'Content-Type': 'text/plain; charset=utf-8'}
+    
+    @app.route('/static/favicon.svg')
+    def favicon_svg():
+        """Serve SVG favicon directly"""
+        from flask import send_from_directory, current_app
+        import os
+        return send_from_directory(
+            os.path.join(current_app.root_path, 'static'),
+            'favicon.svg', 
+            mimetype='image/svg+xml'
+        )
     
     @app.route('/api/tables/available')
     def get_available_tables():
