@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}🍽️ Bella Vista Restaurant{% endblock %}</title>
     
-    <!-- Google Fonts for better emoji support -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+    <!-- Inline emoji font for guaranteed loading -->
+    <style>
+        @font-face {
+            font-family: 'EmojiFont';
+            src: url('data:font/woff2;base64,') format('woff2');
+            font-display: swap;
+        }
+    </style>
     
     <!-- Favicon for Bella Vista Restaurant -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23667eea'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>🍽️</text></svg>">

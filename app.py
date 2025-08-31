@@ -61,18 +61,8 @@ def register_routes(app):
     
     @app.route('/favicon.ico')
     def favicon():
-        """Serve favicon"""
-        from flask import send_from_directory, current_app
-        import os
-        try:
-            return send_from_directory(
-                os.path.join(current_app.root_path, 'static'),
-                'favicon.svg', 
-                mimetype='image/svg+xml'
-            )
-        except Exception as e:
-            # Fallback: return a simple text response
-            return "🍽️", 200, {'Content-Type': 'text/plain; charset=utf-8'}
+        """Serve favicon - direct emoji response"""
+        return "🍽️", 200, {'Content-Type': 'text/plain; charset=utf-8'}
     
     @app.route('/static/favicon.svg')
     def favicon_svg():
