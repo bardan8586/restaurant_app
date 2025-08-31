@@ -89,6 +89,15 @@ def register_routes(app):
             'timestamp': datetime.now().isoformat()
         })
     
+    @app.route('/health')
+    def health():
+        """Health check route for deployment monitoring"""
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'version': '1.0.0'
+        })
+    
     @app.route('/api/tables/available')
     def get_available_tables():
         """

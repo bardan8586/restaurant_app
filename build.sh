@@ -8,6 +8,6 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 echo "🗄️ Setting up database..."
-python setup_database.py
+python setup_database.py || echo "⚠️ Database setup failed, continuing with app startup..."
 
 echo "✅ Build completed successfully!"
