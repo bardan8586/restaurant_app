@@ -85,6 +85,20 @@ def register_routes(app):
             mimetype='image/svg+xml'
         )
     
+    @app.route('/debug')
+    def debug():
+        """Debug route to test what's working"""
+        from flask import jsonify
+        import os
+        return jsonify({
+            'status': 'working',
+            'static_folder': app.static_folder,
+            'static_url_path': app.static_url_path,
+            'static_files_exist': os.path.exists(os.path.join(app.root_path, 'static', 'favicon.svg')),
+            'emoji_test': '🍽️ 🇺🇸 🇳🇵 🇬🇧',
+            'timestamp': datetime.now().isoformat()
+        })
+    
     @app.route('/api/tables/available')
     def get_available_tables():
         """
