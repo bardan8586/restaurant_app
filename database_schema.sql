@@ -13,7 +13,7 @@ CREATE TABLE customers (
     customer_id INT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
-    phone VARCHAR(20) NOT NULL UNIQUE,
+    phone VARCHAR(30) NOT NULL UNIQUE,
     email VARCHAR(100) UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -112,11 +112,11 @@ INSERT INTO users (username, password_hash, role, email) VALUES
 
 -- Sample Customers
 INSERT INTO customers (first_name, last_name, phone, email) VALUES
-('John', 'Smith', '(555) 123-4567', 'john.smith@email.com'),
-('Sarah', 'Johnson', '(555) 987-6543', 'sarah.johnson@email.com'),
-('Mike', 'Davis', '(555) 456-7890', 'mike.davis@email.com'),
-('Emily', 'Brown', '(555) 321-9876', 'emily.brown@email.com'),
-('David', 'Wilson', '(555) 654-3210', 'david.wilson@email.com');
+('John', 'Smith', '+1 (555) 123-4567', 'john.smith@email.com'),
+('Sarah', 'Johnson', '+44 20 7946 0958', 'sarah.johnson@email.com'),
+('Mike', 'Davis', '+1 (555) 456-7890', 'mike.davis@email.com'),
+('Emily', 'Brown', '+33 1 42 86 83 26', 'emily.brown@email.com'),
+('David', 'Wilson', '+977 1 4567890', 'david.wilson@email.com');
 
 -- Sample Reservations
 INSERT INTO reservations (customer_id, table_id, reservation_date, reservation_time, party_size, status, special_requests) VALUES

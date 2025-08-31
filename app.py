@@ -359,6 +359,35 @@ def register_routes(app):
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
     
+    @app.route('/api/database/view')
+    @login_required
+    def view_database():
+        """API endpoint to view all database data - like phpMyAdmin"""
+        if not current_user.is_admin():
+            return jsonify({'error': 'Access denied. Admin privileges required.'}), 403
+        
+        try:
+            # Get all data in JSON format
+            customers = [customer.to_dict() for customer in Customer.query.all()]
+            tables = [table.to_dict() for table in Table.query.all()]
+            reservations = [reservation.to_dict() for reservation in Reservation.query.all()]
+            users = [user.to_dict() for user in User.query.all()]
+            
+            return jsonify({
+                'database_info': {
+                    'type': 'SQLite',
+                    'uri': app.config['SQLALCHEMY_DATABASE_URI']
+                },
+                'tables': {
+                    'customers': {'count': len(customers), 'data': customers},
+                    'tables': {'count': len(tables), 'data': tables},
+                    'reservations': {'count': len(reservations), 'data': reservations},
+                    'users': {'count': len(users), 'data': users}
+                }
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
     @app.route('/api/tables', methods=['POST'])
     @login_required
     def create_table():

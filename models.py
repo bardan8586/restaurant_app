@@ -33,7 +33,7 @@ class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    phone = db.Column(db.String(20), nullable=False, unique=True, index=True)
+    phone = db.Column(db.String(30), nullable=False, unique=True, index=True)
     email = db.Column(db.String(100), unique=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
