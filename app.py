@@ -59,6 +59,14 @@ def register_routes(app):
         """Main page - Customer portal"""
         return render_template('index.html')
     
+    @app.route('/favicon.ico')
+    def favicon():
+        """Serve favicon"""
+        from flask import send_from_directory
+        import os
+        return send_from_directory(os.path.join(app.root_path, 'static'),
+                                 'favicon.svg', mimetype='image/svg+xml')
+    
     @app.route('/api/tables/available')
     def get_available_tables():
         """

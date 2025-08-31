@@ -211,6 +211,9 @@ $(document).ready(function() {
             special_requests: $('#specialRequests').val()
         };
         
+        // Debug: Log the phone number being sent
+        console.log('Phone number being sent:', formData.phone);
+        
         // Validate required fields
         if (!formData.first_name || !formData.last_name || !formData.phone || 
             !formData.date || !formData.time || !formData.party_size) {
@@ -353,17 +356,20 @@ function checkSystemStatus() {
 function validateForm() {
     const phone = $('#customerPhone').val().trim();
     
-    if (phone.length < 5) {
-        showMessage('Please enter a valid phone number (minimum 5 digits)', 'error');
+    if (phone.length < 3) {
+        showMessage('Please enter a valid phone number (minimum 3 digits)', 'error');
         return false;
     }
     
-    // Basic phone number validation (digits, spaces, dashes, parentheses)
-    const phoneRegex = /^[\d\s\-\(\)\+\.]+$/;
+    // More flexible phone number validation (allows more characters)
+    const phoneRegex = /^[\d\s\-\(\)\+\.\#\*]+$/;
     if (!phoneRegex.test(phone)) {
-        showMessage('Please enter a valid phone number (numbers only)', 'error');
+        showMessage('Please enter a valid phone number', 'error');
         return false;
     }
+    
+    // Debug: Log phone validation
+    console.log('Phone validation passed:', phone);
     
     const date = new Date($('#reservationDate').val());
     const today = new Date();
