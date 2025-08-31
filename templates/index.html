@@ -2,6 +2,50 @@
 
 {% block title %}Customer Portal - {{ super() }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Country code dropdown styling */
+    #countryCode {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', system-ui, sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+        transition: border-color 0.3s ease;
+    }
+
+    #countryCode:hover {
+        border-color: #007bff;
+    }
+
+    #countryCode:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+
+    /* Ensure phone input matches country code styling */
+    #customerPhone {
+        font-family: inherit;
+        transition: border-color 0.3s ease;
+    }
+
+    #customerPhone:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+
+    /* Better flag display */
+    #countryCode option {
+        font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', system-ui, sans-serif;
+        padding: 5px;
+    }
+</style>
+{% endblock %}
+
 {% block navigation %}
 <div class="nav-tabs">
     <a href="#" class="nav-tab active" onclick="showTab('customer')">Customer Portal</a>
@@ -30,7 +74,7 @@
             <div class="form-group">
                 <label for="customerPhone">Phone *</label>
                 <div style="display: flex; gap: 5px;">
-                    <select id="countryCode" name="country_code" style="width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <select id="countryCode" name="country_code" style="width: 140px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; font-size: 14px;">
                         <option value="+1">🇺🇸 +1 (US)</option>
                         <option value="+1">🇨🇦 +1 (CA)</option>
                         <option value="+44">🇬🇧 +44 (UK)</option>
