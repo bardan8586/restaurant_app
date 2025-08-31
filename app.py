@@ -399,6 +399,81 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'error': str(e)}), 500
     
+    @app.route('/api/tables/<int:table_id>', methods=['GET'])
+    @login_required
+    def get_table(table_id):
+        """API endpoint to get a specific table"""
+        if not current_user.is_staff():
+            return jsonify({'error': 'Access denied. Staff privileges required.'}), 403
+        
+        table = Table.query.get_or_404(table_id)
+        return jsonify({'table': table.to_dict()})
+    
+    @app.route('/api/tables/<int:table_id>', methods=['PUT'])
+    @login_required
+    def update_table(table_id):
+        """API endpoint to update a table"""
+        if not current_user.is_admin():
+            return jsonify({'error': 'Access denied. Admin privileges required.'}), 403
+        
+        try:
+            table = Table.query.get_or_404(table_id)
+            data = request.get_json()
+            
+            # Check if table number is being changed and if it already exists
+            if 'table_number' in data and data['table_number'] != table.table_number:
+                existing_table = Table.query.filter_by(table_number=data['table_number']).first()
+                if existing_table:
+                    return jsonify({'error': 'Table number already exists'}), 409
+            
+            # Update fields
+            if 'table_number' in data:
+                table.table_number = data['table_number']
+            if 'capacity' in data:
+                table.capacity = data['capacity']
+            if 'status' in data:
+                table.status = data['status']
+            if 'location' in data:
+                table.location = data['location']
+            
+            db.session.commit()
+            
+            return jsonify({
+                'message': 'Table updated successfully',
+                'table': table.to_dict()
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+    
+    @app.route('/api/tables/<int:table_id>', methods=['DELETE'])
+    @login_required
+    def delete_table(table_id):
+        """API endpoint to delete a table"""
+        if not current_user.is_admin():
+            return jsonify({'error': 'Access denied. Admin privileges required.'}), 403
+        
+        try:
+            table = Table.query.get_or_404(table_id)
+            
+            # Check if table has active reservations
+            active_reservations = Reservation.query.filter_by(
+                table_id=table_id
+            ).filter(Reservation.status.in_(['pending', 'confirmed'])).first()
+            
+            if active_reservations:
+                return jsonify({'error': 'Cannot delete table with active reservations'}), 400
+            
+            db.session.delete(table)
+            db.session.commit()
+            
+            return jsonify({'message': 'Table deleted successfully'})
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': str(e)}), 500
+    
     @app.errorhandler(404)
     def not_found_error(error):
         return render_template('404.html'), 404

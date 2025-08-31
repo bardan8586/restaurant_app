@@ -154,16 +154,55 @@ $(document).ready(function() {
     // Handle edit table form submission
     $('#editTableForm').on('submit', function(e) {
         e.preventDefault();
-        alert('Update table functionality would be implemented here');
-        closeEditModal();
+        
+        const tableId = $('#editTableId').val();
+        const formData = {
+            table_number: parseInt($('#editTableNumber').val()),
+            capacity: parseInt($('#editTableCapacity').val()),
+            location: $('#editTableLocation').val(),
+            status: $('#editTableStatus').val()
+        };
+        
+        $.ajax({
+            url: `/api/tables/${tableId}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                alert('Table updated successfully!');
+                closeEditModal();
+                location.reload();
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                alert(response.error || 'Error updating table');
+            }
+        });
     });
 });
 
 function editTable(tableId) {
-    // In a real implementation, you would fetch table data and populate the form
-    // For now, we'll just show the modal
-    $('#editTableId').val(tableId);
-    $('#editTableModal').show();
+    // Fetch table data and populate the form
+    $.ajax({
+        url: `/api/tables/${tableId}`,
+        method: 'GET',
+        success: function(response) {
+            const table = response.table;
+            
+            // Populate form fields
+            $('#editTableId').val(tableId);
+            $('#editTableNumber').val(table.table_number);
+            $('#editTableCapacity').val(table.capacity);
+            $('#editTableLocation').val(table.location || '');
+            $('#editTableStatus').val(table.status);
+            
+            // Show modal
+            $('#editTableModal').show();
+        },
+        error: function(xhr) {
+            alert('Error loading table data');
+        }
+    });
 }
 
 function closeEditModal() {
@@ -175,8 +214,18 @@ function removeTable(tableId) {
         return;
     }
     
-    // This would need a delete API endpoint
-    alert('Remove table functionality would be implemented here');
+    $.ajax({
+        url: `/api/tables/${tableId}`,
+        method: 'DELETE',
+        success: function(response) {
+            alert('Table removed successfully!');
+            location.reload();
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            alert(response.error || 'Error removing table');
+        }
+    });
 }
 
 // Close modal when clicking outside
